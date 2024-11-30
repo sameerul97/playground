@@ -57,7 +57,7 @@ const SidebarProvider = React.forwardRef<
 >(
   (
     {
-      defaultOpen = true,
+      defaultOpen = false,
       open: openProp,
       onOpenChange: setOpenProp,
       className,
@@ -269,9 +269,12 @@ const SidebarTrigger = React.forwardRef<
     <Button
       ref={ref}
       data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("h-7 w-7", className)}
+      variant="outline"
+      size="default"
+      className={cn(
+        "absolute h-12 w-h-12 bottom-6 right-5 z-[999999]",
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()

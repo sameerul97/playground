@@ -60,13 +60,12 @@ function CloudsComposition() {
 }
 export default function App() {
   return (
-    <main className="purple-bg">
+    <main className="purple-bg w-full overflow-x-auto">
       <Canvas
-        className="!h-screen"
         shadows
         // camera={{ position: [0, 10, 40], fov: 50, near: 0.1, far: 1000 }}
       >
-        <Stats />
+        <Stats className="absolute bottom-0 left-0" />
         {/* <color attach="background" args={['#A964FF']} /> */}
         {/* <Sky /> */}
         <ambientLight intensity={0.5} />

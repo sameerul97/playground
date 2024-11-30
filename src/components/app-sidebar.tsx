@@ -15,6 +15,10 @@ const items = [
     title: "Camera Look At",
     url: "/playground/camera-look-at",
   },
+  {
+    title: "Clouds",
+    url: "/playground/clouds",
+  },
 ]
 
 export function AppSidebar() {
