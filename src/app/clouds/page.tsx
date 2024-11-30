@@ -32,28 +32,35 @@ function randomOnHorizontalPlaneWithSeed(
   return points
 }
 function CloudsComposition() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const cloudPositions = useMemo(
-    () => randomOnHorizontalPlaneWithSeed(20, 40, 10, 2, 1),
+    () => randomOnHorizontalPlaneWithSeed(20, 190, 10, 2, 1),
     []
   )
 
   return (
-    <Float>
-      <Clouds
-        material={THREE.MeshBasicMaterial}
-        texture={"/playground/smoke.png"}
-      >
-        {/* {Array.from({ length: cloudPositions.length / 3 }, (_, i) => (
+    <Float speed={0}>
+      <Clouds material={THREE.MeshBasicMaterial}>
+        {Array.from({ length: cloudPositions.length / 3 }, (_, i) => (
+          <Cloud
             key={i}
-          position={[cloudPositions[i * 3], 0, cloudPositions[i * 3 + 2]]}
-              ))} */}
-        <Cloud position={[-4, -2, -25]} speed={0.2} opacity={1} />
+            segments={10}
+            bounds={[30, 0.1, 80]}
+            volume={40}
+            color="#A978FF"
+            position={[
+              cloudPositions[i * 3],
+              cloudPositions[i * 3 + 1],
+              cloudPositions[i * 3 + 2],
+            ]}
+            renderOrder={i}
+          />
+        ))}
+        {/* <Cloud position={[-4, -2, -25]} speed={0.2} opacity={1} />
         <Cloud position={[4, 2, -15]} speed={0.2} opacity={0.5} />
         <Cloud segments={20} position={[-4, 2, -10]} speed={0.2} opacity={1} />
         <Cloud position={[4, -2, -5]} speed={0.2} opacity={0.5} />
         <Cloud segments={20} position={[4, 2, 0]} speed={0.2} opacity={0.75} />
-        <Cloud segments={20} volume={6} color="#a964ff" />
+        <Cloud segments={20} volume={6} color="#a964ff" /> */}
       </Clouds>
     </Float>
   )
@@ -63,7 +70,7 @@ export default function App() {
     <main className="purple-bg w-full overflow-x-auto">
       <Canvas
         shadows
-        // camera={{ position: [0, 10, 40], fov: 50, near: 0.1, far: 1000 }}
+        camera={{ position: [0, 10, 40], fov: 50, near: 0.1, far: 1000 }}
       >
         <Stats className="absolute bottom-0 left-0" />
         {/* <color attach="background" args={['#A964FF']} /> */}
