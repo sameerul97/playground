@@ -16,6 +16,10 @@ const items = [
     url: "/playground/camera-look-at",
   },
   {
+    title: "Scene Background",
+    url: "/playground/background",
+  },
+  {
     title: "Clouds",
     url: "/playground/clouds",
   },
