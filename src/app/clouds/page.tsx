@@ -45,7 +45,7 @@ function CloudsComposition() {
             key={i}
             segments={10}
             bounds={[30, 0.1, 80]}
-            volume={40}
+            volume={20}
             color="#A978FF"
             position={[
               cloudPositions[i * 3],
