@@ -23,6 +23,10 @@ const items = [
     title: "Clouds",
     url: "/playground/clouds",
   },
+  {
+    title: "Faded Plane",
+    url: "/playground/faded-plane",
+  },
 ]
 
 export function AppSidebar() {
