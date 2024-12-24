@@ -15,7 +15,7 @@ This is a **Next.js** application designed as a playground for experimenting wit
 Clone the repository and install dependencies:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/sameerul97/playground.git
 cd playground
 npm install
 ```
