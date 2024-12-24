@@ -106,7 +106,7 @@ function Road() {
       material.onBeforeCompile = (shader) => {
         shader.uniforms.distMin = { value: 0.65 }
         shader.uniforms.distMax = { value: 1 }
-        shader.uniforms.distCol = { value: new THREE.Color("#000") }
+        shader.uniforms.distCol = { value: new THREE.Color("#fff") }
 
         shader.fragmentShader = `
           uniform float distMin;
@@ -131,7 +131,7 @@ function Road() {
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[10, 10, 100, 100]} />
       <meshStandardMaterial
-        color="white"
+        color="#fff"
         metalness={0.21}
         roughness={2}
         ref={materialRef}
@@ -210,7 +210,7 @@ export default function App() {
   return (
     <main className="purple-bg w-full overflow-x-auto">
       <Canvas shadows camera={{ position: [0, 0.5, 10], fov: 45 }}>
-        <color attach="background" args={["#000"]} />
+        <color attach="background" args={["#fff"]} />
         <Lights />
         <OrbitControls enableDamping maxPolarAngle={1.3} />
         <Road />
