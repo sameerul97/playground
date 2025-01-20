@@ -27,6 +27,14 @@ const items = [
     title: "Faded Plane",
     url: "/playground/faded-plane",
   },
+  {
+    title: "Mouse Bulge effect",
+    url: "/playground/bulge-effect",
+  },
+  {
+    title: "Image ripple",
+    url: "/playground/image-ripple",
+  },
 ]
 
 export function AppSidebar() {
