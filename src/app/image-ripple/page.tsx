@@ -46,7 +46,7 @@ void main() {
 }
 `
 
-export function Model() {
+function Model() {
   const { viewport } = useThree()
   const texture = useTexture(getFullPath("/brush.png"))
   const meshRefs = useRef<THREE.Mesh[]>([])
@@ -119,7 +119,9 @@ export function Model() {
   useFrame(({ gl, scene: finalScene }) => {
     const x = mouse.x - device.width / 2
     const y = -mouse.y + device.height / 2
+
     trackMousePos(x, y)
+
     meshRefs.current.forEach((mesh) => {
       if (mesh.visible) {
         mesh.rotation.z += 0.025
@@ -131,9 +133,6 @@ export function Model() {
     })
 
     if (device.width > 0 && device.height > 0) {
-      // uniforms.current.uTexture.value = imageTexture;
-
-      // Render to base texture with meshes
       gl.setRenderTarget(fboBase)
       gl.clear()
       meshRefs.current.forEach((mesh) => {
@@ -152,17 +151,21 @@ export function Model() {
 
       gl.setRenderTarget(fboTexture)
       gl.render(imageScene, imageCamera)
+
       // @ts-expect-error ignore temp
       uniforms.current.uDisplacement.value = fboBase.texture
 
       gl.setRenderTarget(null)
       gl.render(finalScene, camera)
+
       // Render the scene with updated displacement
-      // gl.setRenderTarget(fboTexture);
-      // gl.clear();
-      // gl.render(scene, camera);
-      // uniforms.current.uTexture.value = fboTexture.texture;
-      // gl.setRenderTarget(null);
+      gl.setRenderTarget(fboTexture)
+      gl.clear()
+      gl.render(scene, camera)
+
+      // @ts-expect-error temp ignore
+      uniforms.current.uTexture.value = fboTexture.texture
+      gl.setRenderTarget(null)
 
       uniforms.current.winResolution.value = new THREE.Vector2(
         device.width,
@@ -196,9 +199,7 @@ export function Model() {
     const texture1 = useTexture(getFullPath("/car.jpg"))
     const material1 = new THREE.MeshBasicMaterial({ map: texture1 })
     const image1 = new THREE.Mesh(geometry, material1)
-    // image1.position.x = -0.25 * viewport.width
-    // image1.position.y = 0
-    // image1.position.z = 1
+
     image1.scale.x = viewport.width / 2
     image1.scale.y = viewport.width / 4
     group.add(image1)
@@ -210,16 +211,14 @@ export function Model() {
   return (
     <group>
       {meshes}
-      {/* <Images /> */}
       <mesh>
         <planeGeometry args={[device.width, device.height, 1, 1]} />
         <shaderMaterial
-          // args={[device.width, device.height, 1]}
           vertexShader={vertex}
           fragmentShader={fragment}
           transparent={true}
           uniforms={uniforms.current}
-        ></shaderMaterial>
+        />
       </mesh>
     </group>
   )

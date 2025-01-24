@@ -35,6 +35,10 @@ const items = [
     title: "Image ripple",
     url: "/playground/image-ripple",
   },
+  {
+    title: "Sticker ball",
+    url: "/playground/sticker-ball",
+  },
 ]
 
 export function AppSidebar() {
