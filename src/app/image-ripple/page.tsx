@@ -16,7 +16,7 @@ import * as THREE from "three"
 import useDimension from "@/hooks/use-dimension"
 import useMouse from "@/hooks/use-mouse"
 
-export const fragment = `
+const fragment = `
 uniform sampler2D uTexture;
 uniform sampler2D uDisplacement;
 uniform vec4 winResolution;
@@ -37,7 +37,7 @@ void main() {
 }
 `
 
-export const vertex = `
+const vertex = `
 varying vec2 vUv;
 
 void main() {
