@@ -220,7 +220,7 @@ const PhysicalMaterialBall = ({ texture }: { texture: THREE.Texture }) => {
     />
   )
 }
-// useTexture.preload(STATION_IMAGES)
+useTexture.preload(STATION_IMAGES)
 
 export default function App() {
   return (
