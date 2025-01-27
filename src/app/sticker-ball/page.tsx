@@ -1,12 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { getFullPath } from "@/helpers/pathHelper"
 import {
   Decal,
   Environment,
+  Loader,
   MeshWobbleMaterial,
   OrbitControls,
+  Sparkles,
+  Stats,
   useTexture,
 } from "@react-three/drei"
 import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber"
@@ -295,10 +298,71 @@ const HemisphereLight = () => {
 
   return <hemisphereLight {...hemLightProps} />
 }
+
+const SparklesImpl = () => {
+  const {
+    // color, size, scale, count, speed,
+    disableSparkle,
+  } = useControls("Sparkles", {
+    // color: "#9e02f2",
+    // size: { value: 2, min: 0, max: 5, step: 0.01 },
+    // scale: [4, 4, 4],
+    // count: { value: 50, min: 0, max: 500, step: 1 },
+    // speed: { value: 2, min: 0, max: 5, step: 0.01 },
+    disableSparkle: true,
+  })
+
+  if (disableSparkle) {
+    return null
+  }
+
+  return (
+    <Sparkles
+      // count={count}
+      // scale={scale}
+      // size={size}
+      // color={color}
+      // speed={speed}
+      count={50}
+      scale={[4, 3, 5]}
+      size={2}
+      color="#9e02f2"
+      speed={2.5}
+      opacity={0.5}
+    />
+  )
+}
+
 export default function App() {
+  const purpleBgStyles: React.CSSProperties = {
+    backgroundImage: `
+      radial-gradient(circle at 50% -10%, #a964ff 0%, rgba(255, 255, 255, 0) 60%), 
+      linear-gradient(#6481ff -48%, transparent 80%)`,
+    backgroundColor: "#fcf9ff",
+    backgroundPosition: "center 101%",
+    backgroundSize: "100%",
+    backgroundRepeat: "repeat-x",
+    width: "100%",
+  }
+
   return (
     <main className="purple-bg w-full overflow-x-auto">
-      <Leva />
+      <Leva collapsed />
+      <Loader
+        containerStyles={purpleBgStyles}
+        dataStyles={{ color: "#170E21" }}
+        barStyles={{
+          height: 6,
+          background: "#DF51E2",
+          borderRadius: "12px",
+        }}
+        innerStyles={{
+          height: 6,
+          background: "#8939FF",
+          borderRadius: "12px",
+        }}
+        dataInterpolation={(p) => `Loading ${p.toFixed(0.1)}%`}
+      />
       <Canvas shadows camera={{ position: [0, 0.5, 5], fov: 45 }}>
         <OrbitControls
           enableDamping
@@ -307,9 +371,13 @@ export default function App() {
           minDistance={3}
           maxDistance={6}
         />
-        <Environment preset="warehouse" environmentIntensity={1} />
+        <Suspense fallback={null}>
+          <Environment preset="warehouse" environmentIntensity={1} />
+          <RayoBallSticker />
+          <SparklesImpl />
+        </Suspense>
+        <Stats />
         <HemisphereLight />
-        <RayoBallSticker />
       </Canvas>
     </main>
   )
