@@ -9,6 +9,7 @@ import {
   useTexture,
 } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
+import { Leva, useControls } from "leva"
 import * as THREE from "three"
 import { GLTF } from "three-stdlib"
 
@@ -128,13 +129,22 @@ function Road() {
     }
   }, [])
 
+  const { color, metalness, roughness } = useControls("Floor Props", {
+    color: "#fff",
+    metalness: { value: 0.21, min: 0, max: 2 },
+    roughness: { value: 2, min: 0, max: 4 },
+  })
+
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[10, 10, 100, 100]} />
       <meshStandardMaterial
-        color="#fff"
-        metalness={0.21}
-        roughness={2}
+        // color="#fff"
+        // metalness={0.21}
+        // roughness={2}
+        color={color}
+        metalness={metalness}
+        roughness={roughness}
         ref={materialRef}
         map={colorMap}
         roughnessMap={roughnessMap}
@@ -211,6 +221,7 @@ function Lights() {
 export default function App() {
   return (
     <main className="purple-bg w-full overflow-x-auto">
+      <Leva collapsed />
       <Canvas shadows camera={{ position: [0, 0.5, 10], fov: 45 }}>
         <color attach="background" args={["#fff"]} />
         <Lights />
