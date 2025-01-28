@@ -370,6 +370,7 @@ export default function App() {
           dampingFactor={0.1}
           minDistance={3}
           maxDistance={6}
+          enablePan={false}
         />
         <Suspense fallback={null}>
           <Environment preset="warehouse" environmentIntensity={1} />
