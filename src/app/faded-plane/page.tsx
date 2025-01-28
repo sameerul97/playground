@@ -12,6 +12,7 @@ import { Canvas, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { GLTF } from "three-stdlib"
 
+import { CameraTrackingLight } from "@/components/3d/camera-tracking-light"
 import { TeslaCyberTruck } from "@/components/3d/tesla-cyber-truck"
 
 type GLTFResult = GLTF & {
@@ -195,6 +196,7 @@ function Lights() {
   return (
     <>
       <ambientLight intensity={Math.PI * 0.5} />
+      <CameraTrackingLight castShadow={false} />
       <directionalLight
         intensity={Math.PI}
         castShadow
