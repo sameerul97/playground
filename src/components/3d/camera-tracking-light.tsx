@@ -2,7 +2,7 @@ import { useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three"
 
-export const CameraTrackingLight = () => {
+export const CameraTrackingLight = ({ ...props }) => {
   const lightRef = useRef<THREE.DirectionalLight>(null)
   const { camera } = useThree()
 
@@ -12,5 +12,7 @@ export const CameraTrackingLight = () => {
     }
   })
 
-  return <directionalLight ref={lightRef} color="white" intensity={2} />
+  return (
+    <directionalLight ref={lightRef} color="white" intensity={2} {...props} />
+  )
 }
