@@ -35,7 +35,7 @@ type GLTFResult = GLTF & {
 }
 
 // @ts-expect-error temporarily ignore the error
-export function Model(props: JSX.IntrinsicElements["group"]) {
+function Model(props: JSX.IntrinsicElements["group"]) {
   const { nodes, materials } = useGLTF(
     getFullPath("/pacman_machine.glb")
   ) as GLTFResult
