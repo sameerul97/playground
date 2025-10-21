@@ -39,6 +39,10 @@ const items = [
     title: "Sticker ball",
     url: "/playground/sticker-ball",
   },
+  {
+    title: "Car",
+    url: "/playground/car",
+  },
 ]
 
 export function AppSidebar() {

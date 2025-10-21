@@ -14,7 +14,7 @@ import * as THREE from "three"
 import { GLTF } from "three-stdlib"
 
 import { CameraTrackingLight } from "@/components/3d/camera-tracking-light"
-import { TeslaCyberTruck } from "@/components/3d/tesla-cyber-truck"
+import { TeslaCyberTruckOld } from "@/components/3d/tesla-cyber-truck-old"
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -228,7 +228,7 @@ export default function App() {
         <OrbitControls enableDamping maxPolarAngle={1.3} />
         <Road />
         {/* <Car /> */}
-        <TeslaCyberTruck scale={1.3} position={[0, 0.55, 0]} />
+        <TeslaCyberTruckOld scale={1.3} position={[0, 0.55, 0]} />
         <Environment preset="warehouse" environmentIntensity={0.4} />
       </Canvas>
     </main>
