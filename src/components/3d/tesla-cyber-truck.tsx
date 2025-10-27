@@ -52,7 +52,89 @@ export function TeslaCyberTruck({
   const frontWheelRef = useRef<THREE.Mesh>(null!)
   const backWheelRef = useRef<THREE.Mesh>(null!)
 
-  // ✅ Use props as defaults for Leva controls
+  const baseControls = useControls("Car Base Material", {
+    color: { value: "#313131" },
+    metalness: { value: 0.8, min: 0, max: 1 },
+    roughness: { value: 0.5, min: 0, max: 1 },
+  })
+
+  const wheelControls = useControls("Car Wheels", {
+    color: { value: "#1a1a1a" },
+    metalness: { value: 0.5, min: 0, max: 1 },
+    roughness: { value: 0.5, min: 0, max: 1 },
+  })
+
+  const frontLightControls = useControls("Car Front Light", {
+    color: { value: "#ffffff" },
+    metalness: { value: 0, min: 0, max: 1 },
+    roughness: { value: 0.1, min: 0, max: 1 },
+    emissiveIntensity: { value: 1, min: 0, max: 10 },
+  })
+
+  const rearLightControls = useControls("Car Rear Light", {
+    color: { value: "#ff0000" },
+    metalness: { value: 0, min: 0, max: 1 },
+    roughness: { value: 0.1, min: 0, max: 1 },
+    emissiveIntensity: { value: 1, min: 0, max: 10 },
+  })
+
+  const misc1Controls = useControls("Car Material.004", {
+    color: { value: "#666666" },
+    metalness: { value: 0.5, min: 0, max: 1 },
+    roughness: { value: 0.5, min: 0, max: 1 },
+  })
+  const misc2Controls = useControls("Car Material.001", {
+    color: { value: "#888888" },
+    metalness: { value: 0.3, min: 0, max: 1 },
+    roughness: { value: 0.6, min: 0, max: 1 },
+  })
+
+  useEffect(() => {
+    // materials.Base.color.set(baseControls.color)
+    // materials.Base.metalness = baseControls.metalness
+    // materials.Base.roughness = baseControls.roughness
+
+    // materials.Front_Wheel_Material.color.set(wheelControls.color)
+    // materials.Front_Wheel_Material.metalness = wheelControls.metalness
+    // materials.Front_Wheel_Material.roughness = wheelControls.roughness
+
+    // materials.TeslaFrontLight.color.set(frontLightControls.color)
+    // materials.TeslaFrontLight.metalness = frontLightControls.metalness
+    // materials.TeslaFrontLight.roughness = frontLightControls.roughness
+    // materials.TeslaFrontLight.emissive = new THREE.Color(
+    //   frontLightControls.color
+    // )
+    // materials.TeslaFrontLight.emissiveIntensity =
+    //   frontLightControls.emissiveIntensity
+
+    // materials.TeslaRearLight.color.set(rearLightControls.color)
+    // materials.TeslaRearLight.metalness = rearLightControls.metalness
+    // materials.TeslaRearLight.roughness = rearLightControls.roughness
+    // materials.TeslaRearLight.emissive = new THREE.Color(rearLightControls.color)
+    // materials.TeslaRearLight.emissiveIntensity =
+    //   rearLightControls.emissiveIntensity
+
+    // materials["Material.004"].color.set(misc1Controls.color)
+    // materials["Material.004"].metalness = misc1Controls.metalness
+    // materials["Material.004"].roughness = misc1Controls.roughness
+
+    // materials["Material.001"].color.set(misc2Controls.color)
+    // materials["Material.001"].metalness = misc2Controls.metalness
+    // materials["Material.001"].roughness = misc2Controls.roughness
+
+    Object.values(materials).forEach((mat) => {
+      mat.needsUpdate = true
+    })
+  }, [
+    baseControls,
+    wheelControls,
+    frontLightControls,
+    rearLightControls,
+    misc1Controls,
+    misc2Controls,
+    materials,
+  ])
+
   const {
     color: controlledColor,
     metalness: controlledMetalness,
@@ -63,7 +145,6 @@ export function TeslaCyberTruck({
     roughness: { value: defaultRoughness, min: 0, max: 1, step: 0.01 },
   })
 
-  // ✅ Apply Leva values to materials
   useEffect(() => {
     Object.values(materials).forEach((mat) => {
       mat.color.set(controlledColor)
@@ -73,7 +154,6 @@ export function TeslaCyberTruck({
     })
   }, [controlledColor, controlledMetalness, controlledRoughness, materials])
 
-  // ✅ Animate wheels
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
     const rotationSpeed = -4 * t

@@ -42,6 +42,7 @@ export function LampPost(props: JSX.IntrinsicElements["group"]) {
         geometry={nodes.poste1_luz_0.geometry}
         material={materials.material}
         material-emissiveIntensity="2"
+        // material-emissive="yellow"
       />
     </group>
   )
