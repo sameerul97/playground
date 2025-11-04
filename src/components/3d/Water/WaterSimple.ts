@@ -161,9 +161,8 @@ class WaterSimple extends Mesh {
       mirrorCamera.up.reflect(normal)
       mirrorCamera.lookAt(target)
 
-      if (camera instanceof PerspectiveCamera) {
-        mirrorCamera.far = camera.far // Used in WebGLBackground
-      }
+      // @ts-expect-error tempignore
+      mirrorCamera.far = camera.far // Used in WebGLBackground
       mirrorCamera.updateMatrixWorld()
       mirrorCamera.projectionMatrix.copy(camera.projectionMatrix)
 
