@@ -51,6 +51,14 @@ const items = [
     title: "Sunset Car",
     url: "/playground/sunset-car",
   },
+  {
+    title: "ST",
+    url: "/playground/st",
+  },
+  {
+    title: "Ground Projection",
+    url: "/playground/ground-projection",
+  },
 ]
 
 export function AppSidebar() {
