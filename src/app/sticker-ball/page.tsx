@@ -189,6 +189,7 @@ const RayoBallSticker = () => {
       ))}
 
       <MeshWobbleMaterial
+        // @ts-expect-error temp ignore
         ref={materialRef}
         roughness={roughness}
         metalness={metalness}
