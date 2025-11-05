@@ -313,7 +313,7 @@ const TARGET_POS_2 = new THREE.Vector3(78, 48, -49)
 const TARGET_DISTANCE_1 = 100
 const TARGET_DISTANCE_2 = 70
 
-export function ThunderLight() {
+function ThunderLight() {
   const light1Ref = useRef<THREE.PointLight>(null)
   const light2Ref = useRef<THREE.PointLight>(null)
   const scroll = useScroll()
