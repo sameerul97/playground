@@ -5,10 +5,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import { getFullPath } from "@/helpers/pathHelper"
 import {
   Environment,
-  OrbitControls,
-  Plane,
+  ScrollControls,
   Stats,
   useHelper,
+  useScroll,
   useTexture,
 } from "@react-three/drei"
 import {
@@ -19,7 +19,6 @@ import {
   useThree,
 } from "@react-three/fiber"
 import { Leva, useControls } from "leva"
-import { random } from "maath"
 import * as THREE from "three"
 import { Water } from "three-stdlib"
 
@@ -308,70 +307,181 @@ function SemiCircleSmoke({ particleCount = 150 }) {
   )
 }
 
-function ThunderLight() {
-  const light1Ref = useRef(null)
-  const light2Ref = useRef(null)
+// Define the new target positions for the dynamic movement
+const TARGET_POS_1 = new THREE.Vector3(-81, 53, -78)
+const TARGET_POS_2 = new THREE.Vector3(78, 48, -49)
+const TARGET_DISTANCE_1 = 100
+const TARGET_DISTANCE_2 = 70
 
-  // Leva controls for light position and base color
+export function ThunderLight() {
+  const light1Ref = useRef<THREE.PointLight>(null)
+  const light2Ref = useRef<THREE.PointLight>(null)
+  const scroll = useScroll()
+
+  // Use refs for intensity, color, and decay value to maintain frame-to-frame continuity
+  const intensity1 = useRef(0)
+  const intensity2 = useRef(0)
+
   const { lightColor, triggerProbability, maxIntensity, showHelper } =
     useControls("Thunder", {
-      lightColor: { value: "#ff0000" }, // Red light as requested
+      lightColor: { value: "#ff0000" },
       triggerProbability: {
-        value: 0.015,
+        value: 0.01,
         min: 0.001,
         max: 0.05,
         step: 0.001,
         hint: "Chance per frame to trigger a flash",
       },
       maxIntensity: { value: 15000, min: 500, max: 50000, step: 50 },
-      showHelper: { value: false, label: "Show Helper" }, // 👈 Add this
+      showHelper: { value: false, label: "Show Helper" },
     })
-
-  // Use a state variable for intensity to allow fast updating and decay
-  const [intensity1, setIntensity1] = useState(0)
-  const [intensity2, setIntensity2] = useState(0)
-
-  // --- Light 1 position controls ---
-  const { light1Pos, light1Distance } = useControls("Light 1", {
+  const { light1Pos, light1Distance: baseDistance1 } = useControls("Light 1", {
     light1Pos: {
       value: { x: -60, y: 35, z: -95 },
       step: 1,
-      label: "Position",
+      label: "Base Position",
     },
     light1Distance: { value: 150, min: 50, max: 500, step: 10 },
   })
 
-  // --- Light 2 position controls ---
-  const { light2Pos, light2Distance } = useControls("Light 2", {
+  const { light2Pos, light2Distance: baseDistance2 } = useControls("Light 2", {
     light2Pos: {
       value: { x: 60, y: 25, z: -95 },
       step: 1,
-      label: "Position",
+      label: "Base Position",
     },
     light2Distance: { value: 150, min: 50, max: 500, step: 10 },
   })
 
-  // Frame update logic (thunder flash behavior)
+  const [dynamicPos1] = useState(
+    () => new THREE.Vector3(light1Pos.x, light1Pos.y, light1Pos.z)
+  )
+  const [dynamicPos2] = useState(
+    () => new THREE.Vector3(light2Pos.x, light2Pos.y, light2Pos.z)
+  )
+
+  const BASE_POS_1 = useMemo(
+    () => new THREE.Vector3(light1Pos.x, light1Pos.y, light1Pos.z),
+    [light1Pos]
+  )
+  const BASE_POS_2 = useMemo(
+    () => new THREE.Vector3(light2Pos.x, light2Pos.y, light2Pos.z),
+    [light2Pos]
+  )
+
+  const currentTargetPos1 = useRef(BASE_POS_1.clone())
+  const currentTargetPos2 = useRef(BASE_POS_2.clone())
+
+  const colorA = useMemo(() => new THREE.Color(), [])
+  const colorB = useMemo(() => new THREE.Color("#ffffff"), [])
+  const finalColor = useMemo(() => new THREE.Color(), [])
+
   useFrame(() => {
-    if (Math.random() < triggerProbability) {
-      setIntensity1(maxIntensity)
+    const scrollOffset = scroll.offset
+
+    const scrollEndFactor = THREE.MathUtils.smoothstep(
+      scrollOffset,
+      0.8, // Start transition at 80% scroll
+      1.0 // End transition at 100% scroll
+    )
+
+    const flickerFactor = 1.0 - scrollEndFactor
+    const maxFlashIntensity = maxIntensity * flickerFactor
+
+    const endSceneBaseIntensity = maxIntensity * 0.2
+    const baseIntensity = endSceneBaseIntensity * scrollEndFactor
+
+    const isFlashingAllowed = flickerFactor > 0.01
+
+    const movementProbability = 0.5
+    const shouldMove = Math.random() < movementProbability
+
+    const positionLerpSpeed = 0.05
+
+    // --- Light 1 Update ---
+    if (isFlashingAllowed) {
+      if (Math.random() < triggerProbability) {
+        intensity1.current = baseIntensity + maxFlashIntensity
+
+        if (shouldMove) {
+          currentTargetPos1.current = TARGET_POS_1
+        }
+      } else {
+        // Decay towards the current base intensity
+        intensity1.current = Math.max(
+          baseIntensity,
+          intensity1.current - maxFlashIntensity * 0.1
+        )
+
+        // Slowly move back to base position when not flashing and intensity is low
+        if (intensity1.current < baseIntensity + maxIntensity * 0.05) {
+          currentTargetPos1.current = BASE_POS_1
+        }
+      }
     } else {
-      setIntensity1((i) => Math.max(0, i - maxIntensity * 0.1))
+      // If not flashing, maintain base intensity and return to base position
+      intensity1.current = baseIntensity
+      currentTargetPos1.current = BASE_POS_1
     }
 
-    if (Math.random() < triggerProbability * 0.9) {
-      setIntensity2(maxIntensity)
+    // Interpolate position 1 and distance 1
+    dynamicPos1.lerp(currentTargetPos1.current, positionLerpSpeed)
+    const dynamicDistance1 = THREE.MathUtils.lerp(
+      baseDistance1,
+      TARGET_DISTANCE_1,
+      scrollEndFactor
+    )
+
+    // --- Light 2 Update ---
+    if (isFlashingAllowed) {
+      if (Math.random() < triggerProbability * 0.9) {
+        intensity2.current = baseIntensity + maxFlashIntensity
+
+        if (shouldMove) {
+          currentTargetPos2.current = TARGET_POS_2
+        }
+      } else {
+        // Decay towards the current base intensity
+        intensity2.current = Math.max(
+          baseIntensity,
+          intensity2.current - maxFlashIntensity * 0.1
+        )
+
+        // Slowly move back to base position when not flashing and intensity is low
+        if (intensity2.current < baseIntensity + maxIntensity * 0.05) {
+          currentTargetPos2.current = BASE_POS_2
+        }
+      }
     } else {
-      setIntensity2((i) => Math.max(0, i - maxIntensity * 0.1))
+      // If not flashing, maintain base intensity and return to base position
+      intensity2.current = baseIntensity
+      currentTargetPos2.current = BASE_POS_2
     }
 
-    // @ts-expect-error temp ignore
-    if (light1Ref.current) light1Ref.current.intensity = intensity1
-    // @ts-expect-error temp ignore
-    if (light2Ref.current) light2Ref.current.intensity = intensity2
+    dynamicPos2.lerp(currentTargetPos2.current, positionLerpSpeed)
+    const dynamicDistance2 = THREE.MathUtils.lerp(
+      baseDistance2,
+      TARGET_DISTANCE_2,
+      scrollEndFactor
+    )
+
+    colorA.set(lightColor)
+    finalColor.copy(colorA).lerp(colorB, scrollEndFactor)
+
+    if (light1Ref.current) {
+      light1Ref.current.intensity = intensity1.current
+      light1Ref.current.color.copy(finalColor)
+      light1Ref.current.position.copy(dynamicPos1)
+      light1Ref.current.distance = dynamicDistance1
+    }
+    if (light2Ref.current) {
+      light2Ref.current.intensity = intensity2.current
+      light2Ref.current.color.copy(finalColor)
+      light2Ref.current.position.copy(dynamicPos2)
+      light2Ref.current.distance = dynamicDistance2
+    }
   })
 
-  // Helpers
   const helperTarget1 = showHelper ? light1Ref : null
   const helperTarget2 = showHelper ? light2Ref : null
 
@@ -380,63 +490,138 @@ function ThunderLight() {
 
   return (
     <>
-      <pointLight
-        ref={light1Ref}
-        position={[light1Pos.x, light1Pos.y, light1Pos.z]}
-        color={lightColor}
-        intensity={intensity1}
-        distance={light1Distance}
-        decay={2}
-        power={10000}
-      />
-
-      {/* Light 2 */}
-      <pointLight
-        ref={light2Ref}
-        position={[light2Pos.x, light2Pos.y, light2Pos.z]}
-        color={lightColor}
-        intensity={intensity2}
-        distance={light2Distance}
-        decay={2}
-        power={10000}
-      />
+      <pointLight ref={light1Ref} decay={2} power={10000} />
+      <pointLight ref={light2Ref} decay={2} power={10000} />
     </>
   )
 }
 
-function Poster() {
-  const [poster] = useTexture([getFullPath("/st/st-3.png")])
-  return (
-    <Plane position={[0, 4, 60]} scale={[4, 5, 1]} args={[5, 2]}>
-      <meshBasicMaterial color="red" map={poster} transparent opacity={1} />
-    </Plane>
-  )
+interface FadingPlaneProps {
+  texturePath: string
+  position?: [number, number, number]
+  scale?: number | [number, number, number]
+  args?: [number, number]
+  fadeInStart?: number
+  fadeInEnd?: number
+  fadeOutStart?: number
+  fadeOutEnd?: number
+  transparent?: boolean
 }
 
-function Ch1() {
-  const [poster] = useTexture([getFullPath("/st/ch-1.png")])
-  return (
-    <Plane position={[0, 4, -10]} scale={27}>
-      <meshBasicMaterial color="red" map={poster} transparent opacity={1} />
-    </Plane>
-  )
-}
+function FadingPlane({
+  texturePath,
+  position = [0, 0, 0],
+  scale = 1,
+  args = [1, 1],
+  fadeInStart = 30, // Start fading in
+  fadeInEnd = 20, // Fully visible
+  fadeOutStart = 10, // Start fading out
+  fadeOutEnd = 5, // Completely invisible
+  transparent = true,
+}: FadingPlaneProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null)
+  const [texture] = useTexture([texturePath])
+  const { camera } = useThree()
 
-function Intro() {
-  const [vec] = useState(() => new THREE.Vector3())
-  return useFrame((state) => {
-    state.camera.position.lerp(
-      vec.set(state.pointer.x * 12, 12 + state.pointer.y * 12, 80),
-      0.05
-    )
-    state.camera.lookAt(0, 6, 0)
+  const planePosition = useMemo(
+    () => new THREE.Vector3(...position),
+    [position]
+  )
+
+  useFrame(() => {
+    if (!meshRef.current || !materialRef.current) return
+
+    const distance = camera.position.distanceTo(planePosition)
+    let opacity = 0
+
+    if (distance <= fadeOutEnd) {
+      // Too close - completely invisible
+      opacity = 0
+    } else if (distance <= fadeOutStart) {
+      // Fading out as we get closer
+      opacity = (distance - fadeOutEnd) / (fadeOutStart - fadeOutEnd)
+    } else if (distance <= fadeInEnd) {
+      // Fully visible range
+      opacity = 1
+    } else if (distance <= fadeInStart) {
+      // Fading in as we approach
+      opacity = 1 - (distance - fadeInEnd) / (fadeInStart - fadeInEnd)
+    } else {
+      // Too far - completely invisible
+      opacity = 0
+    }
+
+    opacity = Math.max(0, Math.min(1, opacity))
+    materialRef.current.opacity = opacity
   })
+
+  return (
+    <mesh ref={meshRef} position={position} scale={scale}>
+      <planeGeometry args={args} />
+      <meshBasicMaterial
+        color={"red"}
+        ref={materialRef}
+        map={texture}
+        transparent={transparent}
+        opacity={0}
+        depthWrite={false}
+      />
+    </mesh>
+  )
+}
+
+const TARGET_FOV = 90
+
+export function CameraRig() {
+  const scroll = useScroll()
+  const [vec] = useState(() => new THREE.Vector3())
+
+  // const { fov: baseFov } = useControls("Camera Settings", {
+  //   fov: {
+  //     value: 60,
+  //     min: 20,
+  //     max: 120,
+  //     step: 1,
+  //     label: "Base Field of View (FOV)",
+  //   },
+  // })
+
+  useFrame((state) => {
+    const scrollOffset = scroll.offset
+    const camera = state.camera as THREE.PerspectiveCamera
+
+    const scrollEndFactor = THREE.MathUtils.smoothstep(
+      scrollOffset,
+      0.8, // Start transition at 80% scroll
+      1.0 // End transition at 100% scroll
+    )
+
+    const dynamicFov = THREE.MathUtils.lerp(
+      60, // baseFov
+      TARGET_FOV,
+      scrollEndFactor
+    )
+
+    if (camera.fov !== dynamicFov) {
+      camera.fov = dynamicFov
+      camera.updateProjectionMatrix()
+    }
+
+    const zPos = THREE.MathUtils.lerp(90, -20, scrollOffset)
+
+    const mouseX = state.pointer.x * 4
+    const mouseY = state.pointer.y * 3
+
+    vec.set(mouseX, 6 + mouseY, zPos)
+
+    state.camera.position.lerp(vec, 0.05)
+  })
+
+  return null
 }
 
 export default function App() {
-  const box = random.inBox(new Float32Array(300 * 5), { sides: [1, 1, 1] })
-  const spherical = random.onSphere(box, { radius: 1 })
-
   const { backgroundColor } = useControls("BackgroundColor", {
     backgroundColor: "#000000",
   })
@@ -467,44 +652,109 @@ export default function App() {
   //   fogEnd: { value: 100, min: 0, max: 1000, step: 1 },
   // })
 
+  // Point light controls
+  // const { intensity, decay, distance, color, position } = useControls(
+  //   "Point Light",
+  //   {
+  //     intensity: { value: 10000, min: 0, max: 100000, step: 100 },
+  //     decay: { value: 2, min: 0, max: 10, step: 0.1 },
+  //     distance: { value: 105, min: 0, max: 1000, step: 1 },
+  //     color: "#ff0000",
+  //     position: { value: [0, 10, -12], step: 0.1 },
+  //   }
+  // )
+
+  // Hemisphere light controls
+  const {
+    hemisphereLightIntensity,
+    skyColor,
+    groundColor,
+    position: hemispherePosition,
+    rotation,
+  } = useControls("Hemisphere Light", {
+    hemisphereLightIntensity: { value: 0.15, min: 0, max: 2, step: 0.01 },
+    skyColor: "#fff",
+    groundColor: "#890000",
+    position: { value: [0, 50, 0], step: 0.1 },
+    rotation: { value: [0, 0, 0], min: 0, max: Math.PI * 2, step: 0.01 },
+  })
+
   return (
     <main className=" w-full overflow-x-auto bg-black">
       <Leva collapsed />
       <Canvas
-        shadows
-        camera={{
-          position: [0, 3, 1200],
-          // position: [0, 15.5, 25],
-        }}
-        // camera={{ position: [0, 1, 10], far: 20000 }}
+      // // shadows
+      // camera={{
+      //   position: [0, 3, 1200],
+      //   // fov: 60,
+      //   // position: [0, 15.5, 25],
+      // }}
+      // camera={{ position: [0, 12, 90] }}
       >
         <color attach="background" args={[backgroundColor]} />
 
         {/* <SemiCircleSmoke /> */}
-        <DreiSmokeWall />
-        <ThunderLight />
-        <Poster />
-        {/* <Ch1 /> */}
-        <MindFlayer />
-        <OrbitControls />
-        <Intro />
-        {/* <Ocean /> */}
-        <WaterSurfaceSimple />
-        <pointLight
+        <ScrollControls pages={3}>
+          <DreiSmokeWall />
+          <ThunderLight />
+          <FadingPlane
+            texturePath={getFullPath("/st/st-3.png")}
+            position={[0, 4, 65]}
+            scale={[4, 5, 1]}
+            args={[5, 2]}
+            fadeInStart={1000} // Very far - always visible
+          />
+
+          <FadingPlane
+            texturePath={getFullPath("/st/ch-1.png")}
+            position={[0, 4, 40]}
+            scale={17}
+            fadeInStart={35} // Starts fading in at 25 units
+            fadeInEnd={20} // Fully visible at 20 units
+            fadeOutStart={15} // Starts fading out at 15 units
+            fadeOutEnd={10} // Completely invisible at 10 units
+          />
+
+          <FadingPlane
+            texturePath={getFullPath("/st/ch-3.png")}
+            position={[0, 4, 20]}
+            scale={[20, 10, 1]}
+            fadeInStart={28} // Starts fading in at 28 units
+            fadeInEnd={15} // Fully visible at 15 units
+            fadeOutStart={8} // Starts fading out at 8 units
+            fadeOutEnd={3} // Completely invisible at 3 units
+          />
+
+          <MindFlayer />
+          {/* <OrbitControls /> */}
+          {/* <Intro /> */}
+          <CameraRig />
+          {/* <Ocean /> */}
+          <WaterSurfaceSimple />
+          {/* <pointLight
           name="PointLight"
-          intensity={10000}
-          decay={2}
-          distance={105}
-          color="red"
-          position={[0, 10, -12]}
-        />
-        <AudioPlayer
-          ref={audioRef}
-          src={getFullPath("/st/bg.mp3")}
-          volume={0.5}
-          loop
-        />
-        <EnvironmentWrapper />
+          intensity={intensity}
+          decay={decay}
+          distance={distance}
+          color={color}
+          position={position}
+        /> */}
+          <hemisphereLight
+            name="HemisphereLight"
+            intensity={hemisphereLightIntensity}
+            color={skyColor}
+            groundColor={groundColor}
+            position={hemispherePosition}
+            rotation={rotation}
+          />
+          <AudioPlayer
+            ref={audioRef}
+            src={getFullPath("/st/bg.mp3")}
+            volume={0.5}
+            loop
+          />
+          <EnvironmentWrapper />
+        </ScrollControls>
         <Stats />
       </Canvas>
     </main>

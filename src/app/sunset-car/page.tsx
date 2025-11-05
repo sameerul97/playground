@@ -254,7 +254,7 @@ function SelectEnv() {
 }
 
 function BackgroundPoster() {
-  const [texture] = useTexture([getFullPath("/sunset-seaside.webp")])
+  const [texture] = useTexture([getFullPath("/sunset-car/sunset-seaside.webp")])
   return (
     <mesh
       position={[-0.16, 0.39, -17.415]}

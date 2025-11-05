@@ -55,7 +55,7 @@ export default function Page() {
           // Original source (higher res):
           //   files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/night_bridge_4k.hdr"
           // Compressed 4k via Monogrid tool https://gainmap-creator.monogrid.com/
-          files={getFullPath("/projection/bridge_4k.jpg")}
+          files={getFullPath("/env-maps/bridge_4k.jpg.jpg")}
           environmentIntensity={environmentIntensity}
           ground={{
             height: groundHeight,
