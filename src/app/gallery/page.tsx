@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import { getFullPath } from "@/helpers/pathHelper"
 import {
-  BakeShadows,
   CubeCamera,
   Environment,
   OrbitControls,
@@ -31,12 +30,7 @@ export default function App() {
     <main className="w-full overflow-x-auto bg-black">
       <Leva collapsed />
 
-      <Canvas
-        frameloop="demand"
-        dpr={[1, 1.5]}
-        shadows
-        camera={{ near: 0.1, far: 100, fov: 75, position: [0, 5, 10] }}
-      >
+      <Canvas camera={{ near: 0.1, far: 100, fov: 75, position: [0, 5, 10] }}>
         <fog attach="fog" args={["#000000", 0, 130]} />
         <ambientLight intensity={1} />
         <group position={[0, 0, 0]}>
@@ -48,7 +42,6 @@ export default function App() {
           files={getFullPath("/env-maps/room.jpg")}
           environmentIntensity={3.4}
         />
-        <BakeShadows />
         <Stats />
       </Canvas>
     </main>
@@ -121,14 +114,7 @@ function ReflectiveFloor(props: JSX.IntrinsicElements["group"]) {
   const projection = useBoxProjectedEnv([0, up, 0], [scale, scale, scale])
 
   return (
-    <CubeCamera
-      frames={1}
-      position={[0, 1, 0]}
-      resolution={2048}
-      near={0.1}
-      far={100}
-      {...props}
-    >
+    <CubeCamera frames={1} position={[0, 1, 0]} near={0.1} far={100} {...props}>
       {(texture) => (
         <mesh
           receiveShadow
