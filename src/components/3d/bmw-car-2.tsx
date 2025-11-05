@@ -118,6 +118,8 @@ export function BMWCar2(props: JSX.IntrinsicElements["group"]) {
   //   })
 
   useFrame((state, dt) => {
+    if (props.disableMouseTrackingAnimation) return
+
     const mouse = state.pointer
     const x = THREE.MathUtils.clamp(mouse.x, -1, 1)
 

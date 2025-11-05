@@ -180,12 +180,16 @@ export function TeslaCyberTruck({
         material={materials.TeslaFrontLight}
         castShadow
         receiveShadow
+        material-emissive="white"
+        material-emissiveIntensity={2}
       />
       <mesh
         geometry={nodes.Object_7.geometry}
         material={materials.TeslaRearLight}
         castShadow
         receiveShadow
+        material-emissive="red"
+        material-emissiveIntensity={6}
       />
       <mesh
         geometry={nodes.Object_8.geometry}

@@ -145,6 +145,11 @@ export default function App() {
           scale={1.5}
           position={[0, 0.61, 0]}
         />
+        {/* <BMWCar2
+          disableMouseTrackingAnimation
+          position={[0, -0.02, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+        /> */}
         <LampPosts />
 
         <EnvironmentWrapper />
