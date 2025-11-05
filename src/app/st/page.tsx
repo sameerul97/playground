@@ -573,7 +573,7 @@ function FadingPlane({
 
 const TARGET_FOV = 90
 
-export function CameraRig() {
+function CameraRig() {
   const scroll = useScroll()
   const [vec] = useState(() => new THREE.Vector3())
 
