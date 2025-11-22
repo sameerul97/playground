@@ -910,7 +910,7 @@ export default function App() {
 
   return (
     <main className="w-full overflow-x-auto bg-black">
-      <Leva collapsed />
+      <Leva collapsed hidden />
       <IntroOverlay
         onStart={handleStartClick}
         startText="Tap to Begin"
