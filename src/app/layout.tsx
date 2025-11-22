@@ -6,6 +6,8 @@ import { AppSidebar } from "@/components/app-sidebar"
 
 import "./globals.css"
 
+import { Suspense } from "react"
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -34,7 +36,9 @@ export default function RootLayout({
       >
         <SidebarProvider>
           <AppSidebar />
-          <SidebarTrigger />
+          <Suspense fallback={null}>
+            <SidebarTrigger />
+          </Suspense>
           {children}
         </SidebarProvider>
       </body>
