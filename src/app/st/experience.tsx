@@ -2,7 +2,6 @@
 "use client"
 
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react"
-import { Metadata } from "next"
 // useGLTF.preload(getFullPath("/st/vecna_resized_transformed.glb"))
 // useGLTF.preload(getFullPath("/st/public/st/vecna_resized_transformed_ktx.glb"))
 
