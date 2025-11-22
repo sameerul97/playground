@@ -186,7 +186,7 @@ function ScrollButton() {
         <div
           ref={buttonRef}
           className="absolute bottom-20 left-1/2 z-[200] -translate-x-1/2"
-          style={{ opacity: 0 }} // This starts the opacity at 0 (invisible)
+          style={{ opacity: 0 }}
         >
           <Link
             legacyBehavior
@@ -1019,7 +1019,7 @@ export default function App() {
             />
             <EnvironmentWrapper />
           </ScrollControls>
-          <Stats className="hidden-" />
+          <Stats className="hidden" />
         </Suspense>
       </Canvas>
       <ScrollHintUi.Out />
