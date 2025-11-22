@@ -194,7 +194,7 @@ function ScrollButton() {
             passHref
           >
             <a
-              className="rounded-full bg-red-600 px-6 py-3 text-xl font-bold text-white transition-opacity duration-300"
+              className="rounded-full bg-[#e50815] px-6 py-3 text-white transition-opacity duration-300"
               target="_blank"
               rel="noopener noreferrer"
             >
