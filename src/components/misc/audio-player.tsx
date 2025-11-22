@@ -63,8 +63,6 @@ export const AudioPlayer = forwardRef<AudioPlayerControls, AudioPlayerProps>(
         isLoadedRef.current = true
 
         if (onEnded) {
-          // WebAudio doesn't have native "ended" event for looped sounds,
-          // so only attach when loop = false.
           if (!loop) {
             const duration = buffer.duration * 1000
             setTimeout(() => {

@@ -883,7 +883,7 @@ export default function App() {
 
   const handleStartClick = () => {
     setStarted(true)
-    // audioRef.current?.play()
+    audioRef.current?.play()
   }
 
   // Hemisphere light controls
