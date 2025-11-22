@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams } from "next/navigation"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, VariantProps } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
@@ -265,12 +264,6 @@ const SidebarTrigger = React.forwardRef<
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
-  const searchParams = useSearchParams()
-
-  const hideSidebar = searchParams.get("hideSidebar") === "true"
-  if (hideSidebar) {
-    return null
-  }
 
   return (
     <Button
