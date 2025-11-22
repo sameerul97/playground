@@ -1,12 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react"
+// useGLTF.preload(getFullPath("/st/vecna_resized_transformed.glb"))
+// useGLTF.preload(getFullPath("/st/public/st/vecna_resized_transformed_ktx.glb"))
+
+import Link from "next/link"
 import { getFullPath } from "@/helpers/pathHelper"
 import {
   Environment,
   ScrollControls,
   Stats,
+  useDetectGPU,
+  useGLTF,
   useHelper,
   useScroll,
   useTexture,
@@ -19,9 +25,13 @@ import {
   useThree,
 } from "@react-three/fiber"
 import { Leva, useControls } from "leva"
+import { easing } from "maath"
 import * as THREE from "three"
-import { Water } from "three-stdlib"
+import { GLTF, KTX2Loader, Water } from "three-stdlib"
+import tunnel from "tunnel-rat"
 
+import { IntroOverlay } from "@/components/ui/intro-overlay"
+import { ScrollHint, ScrollHintUi } from "@/components/ui/scroll-hint"
 import { DreiSmokeWall } from "@/components/3d/drei-smoke-wall"
 import { MindFlayer } from "@/components/3d/mind-flayer"
 import WaterSurfaceSimple from "@/components/3d/WaterSurfaceSimple"
@@ -91,6 +101,109 @@ function Ocean() {
         rotation-x={-Math.PI / 2}
       />
     </>
+  )
+}
+
+type GLTFResult = GLTF & {
+  nodes: {
+    polySurface3_Vecna_MAT_0: THREE.Mesh
+  }
+  materials: {
+    Vecna_MAT: THREE.MeshPhysicalMaterial
+  }
+}
+
+// @ts-expect-error temp ignore
+function Vecna(props: JSX.IntrinsicElements["group"]) {
+  const { gl } = useThree()
+  const ktx2Loader = new KTX2Loader()
+  ktx2Loader.setTranscoderPath(
+    "https://unpkg.com/three@0.168.0/examples/jsm/libs/basis/"
+  )
+
+  const { nodes, materials } = useGLTF(
+    getFullPath("/st/vecna_resized_transformed_ktx.glb"),
+    true,
+    true,
+    (loader) => {
+      loader.setKTX2Loader(ktx2Loader.detectSupport(gl))
+    }
+  ) as GLTFResult
+
+  // const { nodes, materials } = useGLTF(
+  //   // getFullPath("/st/vecna_resized_transformed.glb")
+  //   getFullPath("/st/public/st/vecna_resized_transformed_ktx.glb")
+  // ) as GLTFResult
+
+  const meshRef = useRef<THREE.Mesh>(null!)
+  const scroll = useScroll()
+
+  useFrame(() => {
+    const scrollOffset = scroll.offset
+
+    const scrollEndFactor = THREE.MathUtils.smoothstep(scrollOffset, 0.76, 1.0)
+
+    // rotate right → left
+    const startRot = -0.8
+    const endRot = 0.1
+
+    meshRef.current.rotation.y = THREE.MathUtils.lerp(
+      startRot,
+      endRot,
+      scrollEndFactor
+    )
+  })
+
+  return (
+    <group {...props} dispose={null}>
+      <mesh
+        ref={meshRef}
+        geometry={nodes.polySurface3_Vecna_MAT_0.geometry}
+        material={materials.Vecna_MAT}
+      />
+    </group>
+  )
+}
+
+const buttonTunnel = tunnel()
+
+function ScrollButton() {
+  const scroll = useScroll()
+  const buttonRef = useRef<HTMLDivElement>(null)
+
+  useFrame((state, delta) => {
+    if (!buttonRef.current) return
+
+    const targetOpacity = scroll.offset >= 0.95 ? 1 : 0
+    easing.damp(buttonRef.current.style, "opacity", targetOpacity, 0.2, delta)
+    buttonRef.current.style.pointerEvents =
+      scroll.offset >= 0.95 ? "auto" : "none"
+  })
+
+  return (
+    <buttonTunnel.In>
+      <div>
+        <div
+          ref={buttonRef}
+          className="absolute bottom-20 left-1/2 z-[200] -translate-x-1/2"
+          style={{ opacity: 0 }} // This starts the opacity at 0 (invisible)
+        >
+          <Link
+            legacyBehavior
+            href="https://www.netflix.com/gb/title/80057281"
+            passHref
+          >
+            <a
+              className="rounded-full bg-red-600 px-6 py-3 text-xl font-bold text-white transition-opacity duration-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WATCH NOW
+            </a>
+          </Link>
+        </div>
+      </div>
+    </buttonTunnel.In>
   )
 }
 
@@ -308,12 +421,23 @@ function SemiCircleSmoke({ particleCount = 150 }) {
 }
 
 // Define the new target positions for the dynamic movement
-const TARGET_POS_1 = new THREE.Vector3(-81, 53, -78)
-const TARGET_POS_2 = new THREE.Vector3(78, 48, -49)
+// const TARGET_POS_1 = new THREE.Vector3(-81, 53, -78)
+// const TARGET_POS_2 = new THREE.Vector3(78, 48, -49)
+
+// For Fake Flat cloud plane
+const TARGET_POS_1 = new THREE.Vector3(-81, 63, -135)
+const TARGET_POS_2 = new THREE.Vector3(78, 43, -135)
+// const TARGET_POS_1 = new THREE.Vector3(-27, 20, -41)
+// const TARGET_POS_2 = new THREE.Vector3(37, 20, -48)
+
+// Target light for Vecna object
+const VecnaPosLight1 = new THREE.Vector3(-37, 24, -49)
+const VecnaPosLight2 = new THREE.Vector3(35, 24, -29)
+
 const TARGET_DISTANCE_1 = 100
 const TARGET_DISTANCE_2 = 70
 
-function ThunderLight() {
+function ThunderLight({ isVecna = true }: { isVecna?: boolean }) {
   const light1Ref = useRef<THREE.PointLight>(null)
   const light2Ref = useRef<THREE.PointLight>(null)
   const scroll = useScroll()
@@ -422,6 +546,10 @@ function ThunderLight() {
       // If not flashing, maintain base intensity and return to base position
       intensity1.current = baseIntensity
       currentTargetPos1.current = BASE_POS_1
+
+      if (isVecna) {
+        currentTargetPos1.current = VecnaPosLight1
+      }
     }
 
     // Interpolate position 1 and distance 1
@@ -456,6 +584,10 @@ function ThunderLight() {
       // If not flashing, maintain base intensity and return to base position
       intensity2.current = baseIntensity
       currentTargetPos2.current = BASE_POS_2
+
+      if (isVecna) {
+        currentTargetPos2.current = VecnaPosLight2
+      }
     }
 
     dynamicPos2.lerp(currentTargetPos2.current, positionLerpSpeed)
@@ -492,6 +624,58 @@ function ThunderLight() {
     <>
       <pointLight ref={light1Ref} decay={2} power={10000} />
       <pointLight ref={light2Ref} decay={2} power={10000} />
+    </>
+  )
+}
+
+function FakeCloud() {
+  const texture = useTexture(getFullPath("/st/foggy-cloud.webp"))
+  const { color, positionY, positionZ } = useControls("Background FakeCloud", {
+    // color: "white",
+    color: "#ff0505",
+    positionY: { value: 3.5, min: -220, max: 220, step: 0.01 },
+    positionZ: { value: -145, min: -170, max: -20, step: 0.01 },
+  })
+  useEffect(() => {
+    if (texture) {
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.needsUpdate = true
+    }
+  }, [texture])
+
+  return (
+    <>
+      <mesh
+        // scale={40}
+        scale={[655, 355, 1]}
+        // position={[0, 2, -12]}
+        // position={[0, 3.5, -55]}
+        rotation={[0, 0, THREE.MathUtils.degToRad(-10)]}
+        position={[0, positionY + 30, positionZ - 1]}
+      >
+        <planeGeometry />
+        <meshLambertMaterial
+          color={color}
+          transparent
+          opacity={1}
+          map={texture}
+        />
+      </mesh>
+      <mesh
+        // scale={40}
+        scale={[655, 355, 1]}
+        // position={[0, 2, -12]}
+        // position={[0, 3.5, -55]}
+        position={[0, positionY, positionZ]}
+      >
+        <planeGeometry />
+        <meshLambertMaterial
+          color={color}
+          transparent
+          opacity={1}
+          map={texture}
+        />
+      </mesh>
     </>
   )
 }
@@ -573,52 +757,101 @@ function FadingPlane({
 
 const TARGET_FOV = 90
 
-function CameraRig() {
+function CameraRig({
+  isMobile,
+  started,
+}: {
+  isMobile: boolean
+  started: boolean
+}) {
   const scroll = useScroll()
   const [vec] = useState(() => new THREE.Vector3())
 
-  // const { fov: baseFov } = useControls("Camera Settings", {
-  //   fov: {
-  //     value: 60,
-  //     min: 20,
-  //     max: 120,
-  //     step: 1,
-  //     label: "Base Field of View (FOV)",
-  //   },
-  // })
+  // STATE FOR INTRO
+  const introProgress = useRef(0) // 0 → 1
+  const introDone = useRef(false)
 
-  useFrame((state) => {
-    const scrollOffset = scroll.offset
+  // INITIAL + FINAL CAMERA POSITIONS
+  const introStartPos = useMemo(() => new THREE.Vector3(0, 2, 100), [])
+  const introEndPos = useMemo(() => new THREE.Vector3(0, 4, 90), [])
+
+  useFrame((state, delta) => {
     const camera = state.camera as THREE.PerspectiveCamera
 
-    const scrollEndFactor = THREE.MathUtils.smoothstep(
-      scrollOffset,
-      0.8, // Start transition at 80% scroll
-      1.0 // End transition at 100% scroll
-    )
+    // ─────────────────────────────
+    // INTRO CAMERA ANIMATION
+    // ─────────────────────────────
+    if (!introDone.current) {
+      if (!started) {
+        // hold at initial position before the click
+        camera.position.lerp(introStartPos, 0.2)
+        return
+      }
 
-    const dynamicFov = THREE.MathUtils.lerp(
-      60, // baseFov
-      TARGET_FOV,
-      scrollEndFactor
-    )
+      introProgress.current += delta * 0.6 // animation speed
+      const t = THREE.MathUtils.clamp(introProgress.current, 0, 1)
+
+      camera.position.lerpVectors(introStartPos, introEndPos, t)
+
+      // Optionally animate FOV during intro
+      camera.fov = THREE.MathUtils.lerp(30, 60, t)
+      camera.updateProjectionMatrix()
+
+      if (t >= 1) introDone.current = true
+      return
+    }
+
+    // ─────────────────────────────
+    // NORMAL SCROLL CAMERA BEHAVIOR
+    // (Runs only after intro is complete)
+    // ─────────────────────────────
+    const scrollOffset = scroll.offset
+
+    const scrollEndFactor = THREE.MathUtils.smoothstep(scrollOffset, 0.8, 1.0)
+
+    const dynamicFov = THREE.MathUtils.lerp(60, TARGET_FOV, scrollEndFactor)
 
     if (camera.fov !== dynamicFov) {
       camera.fov = dynamicFov
       camera.updateProjectionMatrix()
     }
 
-    const zPos = THREE.MathUtils.lerp(90, -20, scrollOffset)
+    // Z movement
+    const zPos = THREE.MathUtils.lerp(90, -30, scrollOffset)
 
-    const mouseX = state.pointer.x * 4
-    const mouseY = state.pointer.y * 3
+    // X/Y movement: desktop only
+    const mouseX = isMobile ? 0 : state.pointer.x * 0.9
+    const mouseY = isMobile ? 0 : state.pointer.y * 0.4
 
-    vec.set(mouseX, 6 + mouseY, zPos)
+    // Build vector and lerp camera
+    vec.set(mouseX, 4 + mouseY, zPos)
 
-    state.camera.position.lerp(vec, 0.05)
+    // vec.set(mouseX, 4 + mouseY, zPos)
+
+    camera.position.lerp(vec, 0.05)
   })
 
   return null
+}
+
+function ThunderFloor() {
+  const texture = useTexture(getFullPath("/st/thunder-1.png"))
+
+  return (
+    <mesh
+      rotation={[-Math.PI / 2, 0, -Math.PI / 1.5]}
+      position={[0, 0.1, 0]}
+      scale={202}
+    >
+      <planeGeometry />
+      <meshBasicMaterial
+        map={texture}
+        opacity={0.5}
+        color={"red"}
+        transparent
+      />
+    </mesh>
+  )
 }
 
 export default function App() {
@@ -626,43 +859,32 @@ export default function App() {
     backgroundColor: "#000000",
   })
 
-  const audioRef = useRef<AudioPlayerControls>(null)
+  const GPUTier = useDetectGPU()
+  const [dpr, setDpr] = useState<[number, number]>([1, 1])
+  const [isMobile, setIsMobile] = useState(false)
+  const [started, setStarted] = useState(false)
+
   useEffect(() => {
-    const handleClick = () => {
-      if (audioRef.current) {
-        audioRef.current.play()
-      }
+    if (GPUTier.tier === 3) {
+      setIsMobile(false)
+      setDpr([1, 2])
+    } else {
+      setIsMobile(true)
+      setDpr([1, 1])
     }
 
-    window.addEventListener("click", handleClick)
+    // if (GPUTier.tier === 0 || GPUTier.isMobile) {
+    //   setIsMobile(true)
+    //   setDpr([1, 1])
+    // }
+  }, [GPUTier.tier])
 
-    const audioRefCurrent = audioRef.current
+  const audioRef = useRef<AudioPlayerControls>(null)
 
-    return () => {
-      window.removeEventListener("click", handleClick)
-      if (audioRefCurrent) {
-        audioRefCurrent.stop()
-      }
-    }
-  }, [])
-
-  // const { fogColor, fogStart, fogEnd } = useControls("Fog", {
-  //   fogColor: "#050505",
-  //   fogStart: { value: 40, min: 0, max: 1000, step: 1 },
-  //   fogEnd: { value: 100, min: 0, max: 1000, step: 1 },
-  // })
-
-  // Point light controls
-  // const { intensity, decay, distance, color, position } = useControls(
-  //   "Point Light",
-  //   {
-  //     intensity: { value: 10000, min: 0, max: 100000, step: 100 },
-  //     decay: { value: 2, min: 0, max: 10, step: 0.1 },
-  //     distance: { value: 105, min: 0, max: 1000, step: 1 },
-  //     color: "#ff0000",
-  //     position: { value: [0, 10, -12], step: 0.1 },
-  //   }
-  // )
+  const handleStartClick = () => {
+    setStarted(true)
+    // audioRef.current?.play()
+  }
 
   // Hemisphere light controls
   const {
@@ -672,91 +894,138 @@ export default function App() {
     position: hemispherePosition,
     rotation,
   } = useControls("Hemisphere Light", {
-    hemisphereLightIntensity: { value: 0.15, min: 0, max: 2, step: 0.01 },
+    // hemisphereLightIntensity: { value: 0.15, min: 0, max: 2, step: 0.01 },
+    hemisphereLightIntensity: { value: 2, min: 0, max: 2, step: 0.01 },
     skyColor: "#fff",
     groundColor: "#890000",
     position: { value: [0, 50, 0], step: 0.1 },
     rotation: { value: [0, 0, 0], min: 0, max: Math.PI * 2, step: 0.01 },
   })
 
+  // const { fogColor, fogStart, fogEnd } = useControls("Fog", {
+  //   fogColor: "#f80000",
+  //   fogStart: { value: -100, min: -300, max: 100, step: 1 },
+  //   fogEnd: { value: 55, min: -100, max: 100, step: 1 },
+  // })
+
   return (
-    <main className=" w-full overflow-x-auto bg-black">
+    <main className="w-full overflow-x-auto bg-black">
       <Leva collapsed />
-      <Canvas
-      // // shadows
-      // camera={{
-      //   position: [0, 3, 1200],
-      //   // fov: 60,
-      //   // position: [0, 15.5, 25],
-      // }}
-      // camera={{ position: [0, 12, 90] }}
-      >
-        <color attach="background" args={[backgroundColor]} />
+      <IntroOverlay
+        onStart={handleStartClick}
+        startText="Tap to Begin"
+        backgroundColor="#000"
+      />
 
-        {/* <SemiCircleSmoke /> */}
-        <ScrollControls pages={3}>
+      <Canvas dpr={dpr}>
+        <Suspense fallback={null}>
+          <color attach="background" args={[backgroundColor]} />
+          {/* <fog attach="fog" args={[fogColor, fogStart, fogEnd]} /> */}
+
+          <ThunderFloor />
           <DreiSmokeWall />
-          <ThunderLight />
-          <FadingPlane
-            texturePath={getFullPath("/st/st-3.png")}
-            position={[0, 4, 65]}
-            scale={[4, 5, 1]}
-            args={[5, 2]}
-            fadeInStart={1000} // Very far - always visible
-          />
 
-          <FadingPlane
-            texturePath={getFullPath("/st/ch-1.png")}
-            position={[0, 4, 40]}
-            scale={17}
-            fadeInStart={35} // Starts fading in at 25 units
-            fadeInEnd={20} // Fully visible at 20 units
-            fadeOutStart={15} // Starts fading out at 15 units
-            fadeOutEnd={10} // Completely invisible at 10 units
-          />
+          {/* Static foggy cloud via image */}
+          {/* <VecnaPlane
+            texturePath={getFullPath("/st/foggy-cloud.png")}
+            position={[0, 3.5, -55]}
+            scale={[455, 255, 1]}
+            fadeInStart={1000}
+          /> */}
+          <FakeCloud />
+          <ScrollControls pages={8} damping={0.1}>
+            <ThunderLight />
 
-          <FadingPlane
-            texturePath={getFullPath("/st/ch-3.png")}
-            position={[0, 4, 20]}
-            scale={[20, 10, 1]}
-            fadeInStart={28} // Starts fading in at 28 units
-            fadeInEnd={15} // Fully visible at 15 units
-            fadeOutStart={8} // Starts fading out at 8 units
-            fadeOutEnd={3} // Completely invisible at 3 units
-          />
+            <ScrollHint started={started} />
+            <ScrollButton />
+            <FadingPlane
+              // texturePath={getFullPath("/st/st-3.png")}
+              texturePath={getFullPath("/st/st-3-resized.png")}
+              position={[0, 4, 65]}
+              scale={[5, 6, 1]}
+              args={[5, 2]}
+              fadeInStart={1000}
+            />
+            <FadingPlane
+              texturePath={getFullPath("/st/5.png")}
+              position={[0, 4, 65.5]}
+              scale={[4, 6, 1]}
+              args={[5, 2]}
+              fadeInStart={1000}
+            />
 
-          <MindFlayer />
-          {/* <OrbitControls /> */}
-          {/* <Intro /> */}
-          <CameraRig />
-          {/* <Ocean /> */}
-          <WaterSurfaceSimple />
-          {/* <pointLight
-          name="PointLight"
-          intensity={intensity}
-          decay={decay}
-          distance={distance}
-          color={color}
-          position={position}
-        /> */}
-          <hemisphereLight
-            name="HemisphereLight"
-            intensity={hemisphereLightIntensity}
-            color={skyColor}
-            groundColor={groundColor}
-            position={hemispherePosition}
-            rotation={rotation}
-          />
-          <AudioPlayer
-            ref={audioRef}
-            src={getFullPath("/st/bg.mp3")}
-            volume={0.5}
-            loop
-          />
-          <EnvironmentWrapper />
-        </ScrollControls>
-        <Stats />
+            <FadingPlane
+              // texturePath={getFullPath("/st/red-frame-with-text.png")}
+              // texturePath={getFullPath("/st/get-ready-2.png")}
+              texturePath={getFullPath("/st/get-ready-mob-2.png")}
+              position={[0, 4, 40]}
+              // scale={17}
+              scale={[15, 5, 1]}
+              fadeInStart={35} // Starts fading in at 25 units
+              fadeInEnd={20} // Fully visible at 20 units
+              fadeOutStart={15} // Starts fading out at 15 units
+              fadeOutEnd={2} // Completely invisible at 10 units
+            />
+
+            <FadingPlane
+              texturePath={getFullPath("/st/ch-3.png")}
+              position={[0, 4, 20]}
+              scale={[20, 10, 1]}
+              fadeInStart={28} // Starts fading in at 28 units
+              fadeInEnd={15} // Fully visible at 15 units
+              fadeOutStart={8} // Starts fading out at 8 units
+              fadeOutEnd={3} // Completely invisible at 3 units
+            />
+
+            <FadingPlane
+              texturePath={getFullPath("/st/one-last-adventure-2.png")}
+              position={[0, 4.5, 0]}
+              scale={[13, 6, 1]}
+              fadeInStart={28} // Starts fading in at 28 units
+              fadeInEnd={15} // Fully visible at 15 units
+              fadeOutStart={8} // Starts fading out at 8 units
+              fadeOutEnd={3} // Completely invisible at 3 units
+            />
+
+            <FadingPlane
+              texturePath={getFullPath("/st/see-you-2.png")}
+              position={[0, 3.5, -42]}
+              scale={[25, 6, 1]}
+              fadeInStart={35} // Starts fading in at 28 units
+              fadeInEnd={25} // Fully visible at 15 units
+            />
+
+            <Vecna
+              // rotation={[0, THREE.MathUtils.degToRad(20), 0]}
+              position={[0, -18, -50]}
+              scale={5}
+            />
+            <MindFlayer />
+            <CameraRig started={started} isMobile={isMobile} />
+            <WaterSurfaceSimple />
+            <hemisphereLight
+              name="HemisphereLight"
+              intensity={hemisphereLightIntensity}
+              color={skyColor}
+              groundColor={groundColor}
+              position={hemispherePosition}
+              rotation={rotation}
+            />
+            <AudioPlayer
+              ref={audioRef}
+              src={getFullPath("/st/bg.mp3")}
+              volume={0.5}
+              loop
+            />
+            <EnvironmentWrapper />
+          </ScrollControls>
+          <Stats className="hidden-" />
+        </Suspense>
       </Canvas>
+      <ScrollHintUi.Out />
+      <div id="ui">
+        <buttonTunnel.Out />
+      </div>
     </main>
   )
 }

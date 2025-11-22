@@ -31,7 +31,6 @@ export default function App() {
       <Leva collapsed />
 
       <Canvas camera={{ near: 0.1, far: 100, fov: 75, position: [0, 5, 10] }}>
-        <fog attach="fog" args={["#000000", 0, 130]} />
         <ambientLight intensity={1} />
         <group position={[0, 0, 0]}>
           <Gallery />
@@ -57,7 +56,7 @@ function Gallery(props: JSX.IntrinsicElements["group"]) {
   )
 
   const { nodes, materials } = useGLTF(
-    getFullPath("/gallery/vr_modern_gallery_room_org_ktx.glb"),
+    getFullPath("/gallery/vr_modern_gallery_room_org_2k_ktx.glb"),
     true,
     true,
     (loader) => {
@@ -90,7 +89,7 @@ function ReflectiveFloor(props: JSX.IntrinsicElements["group"]) {
     metalness: { value: 1, min: 0, max: 1, step: 0.01 },
     envMapIntensity: { value: 0.8, min: 0, max: 5 },
     opacity: { value: 0.3, min: 0, max: 1, step: 0.01 },
-    color: "#fffff",
+    color: "#fff",
   })
 
   const [floow_normal_texture] = useTexture([
@@ -143,4 +142,4 @@ function ReflectiveFloor(props: JSX.IntrinsicElements["group"]) {
   )
 }
 
-// useGLTF.preload(getFullPath("/vr_modern_gallery_room_org_ktx.glb"))
+// useGLTF.preload(getFullPath("/vr_modern_gallery_room_org_2k_ktx.glb"))

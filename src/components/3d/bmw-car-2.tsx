@@ -76,7 +76,6 @@ export function BMWCar2(props: JSX.IntrinsicElements["group"]) {
   const frontRightWheelRef = useRef<THREE.Group>(null!)
   const frontLeftWheelRef = useRef<THREE.Group>(null!)
 
-  // 2. Create refs for the wheel and rim meshes
   const wheelRefs = {
     // Tire meshes: Object_46, Object_54, Object_62, Object_70
     frontRightTireRef: useRef<THREE.Mesh>(null!),
@@ -148,7 +147,7 @@ export function BMWCar2(props: JSX.IntrinsicElements["group"]) {
   })
 
   return (
-    <group ref={carRef} position={[0, 0.2, 0]} {...props} dispose={null}>
+    <group ref={carRef} position={[0, 0.2, 22]} {...props} dispose={null}>
       <mesh
         name="Object_4"
         castShadow

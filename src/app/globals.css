@@ -112,3 +112,24 @@ body {
 .noise {
   position: relative;
 }
+
+@layer utilities {
+  .scroll-hint-pulse {
+    animation: pulseHint 1.8s ease-in-out infinite;
+  }
+
+  .scroll-line {
+    @apply relative h-12 w-[2px] overflow-hidden rounded-full bg-white/30;
+  }
+
+  .scroll-line-fill {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      white 40%,
+      white 60%,
+      transparent 100%
+    );
+    animation: scrollLineAnim 1.3s ease-in-out infinite;
+  }
+}

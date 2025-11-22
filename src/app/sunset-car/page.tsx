@@ -1,22 +1,22 @@
 "use client"
 
-import React, { Suspense, useRef, useState } from "react"
+import React, { Suspense, useEffect, useRef, useState } from "react"
 import { getFullPath } from "@/helpers/pathHelper"
 import {
   CameraControls,
   Environment,
-  Loader,
+  Html,
   Stats,
   useGLTF,
   useKTX2,
-  useProgress,
   useTexture,
 } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { folder, Leva, useControls } from "leva"
+import { Leva, useControls } from "leva"
 import * as THREE from "three"
 import { GLTF } from "three-stdlib"
 
+import { IntroOverlay } from "@/components/ui/intro-overlay"
 import { BMWCar2 } from "@/components/3d/bmw-car-2"
 import { ToneMapping } from "@/components/3d/tone-mapping"
 import {
@@ -60,6 +60,9 @@ function Terrain(props) {
   //   z: { value: 0, min: -180, max: 180, step: 0.0001 },
   // })
 
+  const { terrainColor } = useControls("Terrain Color", {
+    terrainColor: "#8b002b",
+  })
   const sandTexture = terrainBase.clone()
   sandTexture.repeat.set(4, 1)
   sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping
@@ -77,7 +80,8 @@ function Terrain(props) {
         rotation={[-Math.PI / 2, 0, 0]}
         scale={[21.827, 24.702, 6.172]}
         material-map={terrainBase}
-        material-color={"#8b002b"}
+        // material-color={"#8b002b"}
+        material-color={terrainColor}
       />
       <mesh
         name="Sand_Flat"
@@ -89,7 +93,8 @@ function Terrain(props) {
         position={[-3.86, 0.12, -1.685]}
         rotation={[0, 1.572, 0]}
         scale={[15.827, 16.702, 6.172]}
-        material-color={"#8b002b"}
+        // material-color={"#8b002b"}
+        material-color={terrainColor}
         material-roughness={1}
       />
       <mesh
@@ -102,7 +107,8 @@ function Terrain(props) {
         position={[3.86, 0.12, -1.685]}
         rotation={[0, 1.572, 0]}
         scale={[15.827, 16.702, 6.172]}
-        material-color={"#8b002b"}
+        // material-color={"#8b002b"}
+        material-color={terrainColor}
         material-roughness={1}
       />
       <mesh
@@ -114,7 +120,8 @@ function Terrain(props) {
         position={[7.837, 0.154, 10.251]}
         scale={[3.856, 3.856, 4.15]}
         material-map={terrainBase}
-        material-color={"#8b002b"}
+        // material-color={"#8b002b"}
+        material-color={terrainColor}
       />
       <mesh
         name="Road"
@@ -170,18 +177,15 @@ function LoopingTerrain() {
 
 function Lights() {
   const { color } = useControls("Light Props", {
-    color: "#f2171a",
+    // color: "#f2171a",
+    color: "#ffffff",
   })
 
   return (
     <>
-      {/* <ambientLight intensity={Math.PI * 0.5} /> */}
-      {/* <CameraTrackingLight castShadow={false} /> */}
       <directionalLight
         intensity={1}
-        // color={"yellow"}
         color={color}
-        castShadow
         receiveShadow={false}
         position={[5, 10, 7.5]}
         shadow-mapSize-width={1024}
@@ -191,63 +195,19 @@ function Lights() {
   )
 }
 
-function Overlay({
-  loadingDone,
-  onStartClick,
-  started, // Receive the new 'started' prop
-}: {
-  loadingDone: boolean
-  onStartClick: () => void
-  started: boolean // Prop type
-}) {
-  // We can simplify this by just using the prop 'started'
-  if (!loadingDone || started) return null
-
-  return (
-    <div
-      className="pointer-events-auto absolute left-0 top-0 flex size-full flex-col items-center justify-center text-white transition-opacity duration-500"
-      onClick={() => {
-        // No need for local setClicked, just call the parent handler
-        onStartClick()
-      }}
-      style={{
-        zIndex: 100,
-        background: "rgba(0, 0, 0, 1)",
-      }}
-    >
-      <h1 className="animate-pulse cursor-pointer text-3xl font-bold">
-        Click to Continue
-      </h1>
-      <p className="mt-2 text-sm text-gray-400">
-        Loading complete. Please click to start the experience.
-      </p>
-    </div>
-  )
-}
-
 function SelectEnv() {
-  const { backgroundRotation, environmentRotation, ...props } = useControls(
+  const { environmentRotation, environmentIntensity } = useControls(
     "Environment",
     {
-      background: folder({
-        backgroundBlurriness: { value: 0, min: 0, max: 1 },
-        backgroundIntensity: { value: 1, min: 0, max: 1 },
-        backgroundRotation: { value: 2, min: 0, max: Math.PI },
-      }),
-      environment: folder({
-        environmentIntensity: { value: 1, min: 0, max: 1 },
-        environmentRotation: { value: 2, min: 0, max: Math.PI },
-      }),
+      environmentIntensity: { value: 1.55, min: 0, max: 5, step: 0.01 },
+      environmentRotation: { value: 2, min: 0, max: Math.PI },
     }
   )
 
   return (
     <Environment
-      background
-      // preset="warehouse"
-      files={getFullPath("/sunset-seaside-low.jpg")}
-      {...props}
-      backgroundRotation={[0, backgroundRotation, 0]}
+      files={getFullPath("/sunset-car/sunset-seaside-low.jpg")}
+      environmentIntensity={environmentIntensity}
       environmentRotation={[0, environmentRotation, 0]}
     />
   )
@@ -255,14 +215,84 @@ function SelectEnv() {
 
 function BackgroundPoster() {
   const [texture] = useTexture([getFullPath("/sunset-car/sunset-seaside.webp")])
+
+  const { opacity } = useControls("BackgroundImage", {
+    opacity: { value: 1, min: 1, max: 10, step: 0.001 },
+  })
+  useEffect(() => {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.colorSpace = "srgb"
+    texture.repeat.set(3, 1)
+    texture.needsUpdate = true
+  }, [texture])
+
   return (
     <mesh
-      position={[-0.16, 0.39, -17.415]}
+      // position={[-0.16, 1.39, -17.415]}
+      position={[0, 2, 0]}
+      castShadow={false}
+      receiveShadow={false}
+      // scale={4}
+      scale={800}
+      // rotation={[0, 1, 0]}
+      rotation={[0, THREE.MathUtils.degToRad(120), 0]}
+    >
+      {/* <planeGeometry args={[56, 55]} /> */}
+      <cylinderGeometry args={[1, 1, 1, 32, 1, true]} />
+
+      <meshBasicMaterial
+        map={texture}
+        // transparent
+        opacity={opacity}
+        side={THREE.DoubleSide}
+        fog={false}
+      />
+    </mesh>
+  )
+}
+
+function BackgroundSmoke() {
+  const controls = useControls("Background Smoke", {
+    // Mesh properties
+    positionX: { value: -0.16, min: -10, max: 10, step: 0.01 },
+    positionY: { value: 1.5, min: -10, max: 10, step: 0.01 },
+    positionZ: { value: -2.415, min: -10, max: 10, step: 0.01 },
+    rotationY: { value: 0.05, min: -Math.PI, max: Math.PI, step: 0.01 },
+    scale: { value: 96, min: 1, max: 120, step: 0.1 },
+
+    // Material properties
+    color: "#b2142e",
+    opacity: { value: 3.8, min: 0, max: 10, step: 0.1 },
+    transparent: true,
+  })
+
+  const [texture] = useTexture([
+    getFullPath("/sunset-car/red-smoke-fog-2.webp"),
+  ])
+
+  useEffect(() => {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
+    texture.colorSpace = "srgb"
+    texture.needsUpdate = true
+  }, [texture])
+
+  return (
+    <mesh
+      position={[controls.positionX, controls.positionY, controls.positionZ]}
+      rotation={[0, controls.rotationY, 0]}
+      scale={controls.scale}
       castShadow={false}
       receiveShadow={false}
     >
-      <planeGeometry args={[56, 55]} />
-      <meshBasicMaterial map={texture} />
+      <cylinderGeometry args={[1, 1, 1, 32, 1, true]} />
+      <meshBasicMaterial
+        color={controls.color}
+        map={texture}
+        transparent={controls.transparent}
+        opacity={controls.opacity}
+        side={THREE.DoubleSide}
+        fog={false}
+      />
     </mesh>
   )
 }
@@ -298,7 +328,13 @@ function BackgroundPoster() {
 //   )
 // }
 
-function CameraRig({ started }: { started: boolean }) {
+function CameraRig({
+  started,
+  isMouseDownRef,
+}: {
+  started: boolean
+  isMouseDownRef: React.MutableRefObject<boolean>
+}) {
   const { disableCameraRig } = useControls("Camera Rig", {
     disableCameraRig: { value: false, label: "Disable Camera Rig" },
   })
@@ -308,16 +344,19 @@ function CameraRig({ started }: { started: boolean }) {
   const targetPosition = useRef(new THREE.Vector3(0, 1, 5.5))
   const progress = useRef(0)
 
-  // Animate camera on start click
+  // Dolly zoom state
+  const dollyProgress = useRef(0)
+  const originalFov = useRef(45)
+  const originalDistance = useRef(30.5)
+
   useFrame((state, delta) => {
     const controls = cameraControlRef.current
     if (!controls) return
 
     if (started && progress.current < 1) {
-      // Ease in over ~2 seconds
       progress.current = Math.min(progress.current + delta * 0.5, 1)
       lastPosition.current.lerpVectors(
-        new THREE.Vector3(0, 6, 12),
+        new THREE.Vector3(0, 6, 1),
         targetPosition.current,
         progress.current
       )
@@ -331,12 +370,31 @@ function CameraRig({ started }: { started: boolean }) {
         false
       )
     } else if (started && progress.current >= 1 && !disableCameraRig) {
-      // Once animation complete, enable pointer-based camera rig
+      // Handle dolly zoom effect using the passed ref
+      if (isMouseDownRef.current) {
+        dollyProgress.current = Math.min(dollyProgress.current + delta * 1.5, 1)
+      } else {
+        dollyProgress.current = Math.max(dollyProgress.current - delta * 1.5, 0)
+      }
+
+      const distanceChange = -5
+      const fovChange = 20
+
+      const currentDistance =
+        originalDistance.current + distanceChange * dollyProgress.current
+      const currentFov = originalFov.current + fovChange * dollyProgress.current
+
+      const camera = state.camera as THREE.PerspectiveCamera
+      camera.fov = currentFov
+      camera.updateProjectionMatrix()
+
       const targetX = -state.pointer.x * 2.5
-      const targetY = Math.max(1, 1 + state.pointer.y * 3)
-      const targetZ = 5.5
+      const targetY = Math.max(1, 2 + state.pointer.y)
+      const targetZ = currentDistance
+
       vec.set(targetX, targetY, targetZ)
       lastPosition.current.lerp(vec, 0.05)
+
       controls.setLookAt(
         lastPosition.current.x,
         lastPosition.current.y,
@@ -360,40 +418,95 @@ function CameraRig({ started }: { started: boolean }) {
 }
 
 export default function App() {
-  const { loaded, total } = useProgress()
-  const loadingDone = loaded === total
+  // const isLoaded = useAppProgress() // 2. Check if loaded
+  // const [loadingDone, setLoadingDone] = useState(false)
   const [started, setStarted] = useState(false)
 
-  // ✅ Single ref for controlling the car music
+  // useEffect(() => {
+  //   if (isLoaded && !loadingDone) {
+  //     // Use a short delay to ensure the state update happens AFTER the current
+  //     // render/load cycle is complete.
+  //     const timer = setTimeout(() => {
+  //       setLoadingDone(true)
+  //     }, 50)
+  //     return () => clearTimeout(timer)
+  //   }
+  // }, [isLoaded, loadingDone]) // Runs when the loading status changes
+
+  const { fogColor, fogStart, fogEnd } = useControls("Fog", {
+    fogColor: "#f80000",
+    fogStart: { value: 20, min: 0, max: 100, step: 1 },
+    fogEnd: { value: 55, min: 0, max: 100, step: 1 },
+  })
+
+  const isMouseDownRef = useRef(false)
   const audioControlsRef = useRef<AudioPlayerControls | null>(null)
 
   const handleStartClick = () => {
     setStarted(true)
-    // ✅ Play the music after the user clicks
     audioControlsRef.current?.play()
   }
 
   return (
-    <main className="noise w-full overflow-x-auto">
-      <Leva collapsed />
+    <main className="w-full overflow-x-auto">
+      <Leva collapsed hidden />
 
-      <Loader
-        dataStyles={{ fontSize: "30px" }}
-        dataInterpolation={(p) => `Loading ${p.toFixed(0.1)}%`}
-      />
+      {/* Loading screen - highest z-index */}
+      {/* <div
+        className="absolute inset-0 flex justify-center items-center bg-black transition-opacity duration-500"
+        style={{
+          zIndex: 200,
+          opacity: loadingDone ? 0 : 1,
+          pointerEvents: loadingDone ? "none" : "auto",
+        }}
+      >
+        <Loader
+          containerStyles={{ background: "black" }}
+          dataInterpolation={(p) => `Loading ${p.toFixed(0)}%`}
+        />
+      </div> */}
 
-      <Overlay
+      {/* Overlay - middle z-index */}
+      {/* <FullScreenLoader loadingDone={loadingDone} /> */}
+      {/* <Overlay2
         loadingDone={loadingDone}
-        onStartClick={handleStartClick}
+        onStartClick={handleStartClick} // <-- Use the handler that calls play()
         started={started}
+      /> */}
+      {/* Reusable Loading + Start Overlay */}
+      <IntroOverlay
+        onStart={handleStartClick}
+        startText="Click to Begin"
+        backgroundColor="#000"
       />
+      <Canvas
+        shadows
+        camera={{ position: [0, 3, 34], fov: 45 }}
+        onPointerDown={() => {
+          isMouseDownRef.current = true
+        }}
+        onPointerUp={() => {
+          isMouseDownRef.current = false
+        }}
+        onPointerLeave={() => {
+          isMouseDownRef.current = false
+        }}
+      >
+        {/* <LoadingManager onLoadComplete={() => setLoadingDone(true)} /> */}
 
-      <Canvas shadows camera={{ position: [0, 3, 34], fov: 45 }}>
         <color attach="background" args={["#000"]} />
-        <Lights />
-
+        <fog attach="fog" args={[fogColor, fogStart, fogEnd]} />
         <Suspense fallback={null}>
+          {started && (
+            <Html fullscreen className="pointer-events-none">
+              <h2 className="text-center text-lg text-white">
+                Click and hold to see Vertigo effect
+              </h2>
+            </Html>
+          )}
+          <Lights />
           <BackgroundPoster />
+          <BackgroundSmoke />
           <LoopingTerrain />
           <BMWCar2 />
           <SelectEnv />
@@ -404,8 +517,7 @@ export default function App() {
             loop
           />
         </Suspense>
-
-        <CameraRig started={started} />
+        <CameraRig started={started} isMouseDownRef={isMouseDownRef} />
         <ToneMapping />
         <Stats />
       </Canvas>

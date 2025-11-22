@@ -192,7 +192,7 @@ useGLTF.preload("/pacman_machine.glb")
 
 export default function App() {
   return (
-    <main className=" w-full overflow-x-auto  ">
+    <main className="w-full overflow-x-auto">
       <Canvas
         shadows
         camera={{ position: [0, 10, 20], fov: 50, near: 0.1, far: 1000 }}

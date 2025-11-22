@@ -18,6 +18,7 @@ type Props = {
   fxDisplayColorAlpha?: number
   fxMixColor?: number | string
   children?: React.ReactNode
+  waterSpeedFactor?: number
 }
 
 export default function WaterSurfaceSimple({
@@ -30,6 +31,7 @@ export default function WaterSurfaceSimple({
   fxDistortionFactor = 0.2,
   fxDisplayColorAlpha = 0.0,
   fxMixColor = 0x000000,
+  waterSpeedFactor = 2,
 }: Props) {
   const ref = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>>()
 
@@ -59,7 +61,8 @@ export default function WaterSurfaceSimple({
     ]
   )
   useFrame((_, delta) => {
-    if (ref.current) ref.current.material.uniforms.time.value += delta / 2
+    if (ref.current)
+      ref.current.material.uniforms.time.value += delta / waterSpeedFactor
   })
 
   const waterObj = useMemo(() => new WaterSimple(geom, config), [geom, config])

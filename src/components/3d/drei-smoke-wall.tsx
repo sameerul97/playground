@@ -93,11 +93,12 @@ function generateSmokeSemiCirclePositions(
   return particlesData
 }
 
-export function DreiSmokeWall({ particleCount = 60 }) {
+export function DreiSmokeWall({ particleCount = 20 }) {
   const { smokeColor, smokeOpacity, smokeGrowth, smokeSpeed } = useControls(
     "Smoke Material",
     {
-      smokeColor: { value: "red" },
+      // smokeColor: { value: "red" },
+      smokeColor: { value: "#a00000" },
       smokeOpacity: { value: 0.63, min: 0, max: 1, step: 0.01 },
       smokeGrowth: {
         value: 10,
@@ -107,7 +108,8 @@ export function DreiSmokeWall({ particleCount = 60 }) {
         hint: "For animated size changes",
       },
       smokeSpeed: {
-        value: 0.4,
+        // value: 0.4,
+        value: 0.2,
         min: 0,
         max: 4,
         step: 0.01,

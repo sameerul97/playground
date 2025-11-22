@@ -1,4 +1,13 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+
+  // Make VS Code load plugins from your node_modules
+  "prettier.useLocalVersion": true,
+  "prettier.requireConfig": true,
+
+  // Prevent VS Code import sorter from conflicting
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "never"
+  }
 }
